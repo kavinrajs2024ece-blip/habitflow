@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Menu, Plus, Search, Calendar, ChevronDown, User, LogOut, CheckCircle2, Flame, Shield, Sun, Moon } from 'lucide-react';
+import { Menu, Plus, Search, Calendar, ChevronDown, User, LogOut, CheckCircle2, Flame, Shield, Sun, Moon, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -39,7 +39,7 @@ export default function Header({
 
   // Format current date nicely
   const today = new Date();
-  const dateOptions = { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' };
+  const dateOptions = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
   const formattedDate = today.toLocaleDateString('en-US', dateOptions);
 
   const hour = today.getHours();
@@ -100,6 +100,23 @@ export default function Header({
         >
           <Plus size={18} />
           <span>Add Habit</span>
+        </button>
+
+        {/* Date Pill */}
+        <div className="ref-date-pill header-date-pill">
+          <Calendar size={15} className="ref-pill-icon" />
+          <span>{formattedDate}</span>
+        </div>
+
+        {/* Notification Bell */}
+        <button 
+          type="button" 
+          className="ref-bell-btn header-bell-btn" 
+          title="Notifications" 
+          aria-label="Notifications"
+        >
+          <Bell size={18} />
+          <span className="ref-bell-dot" />
         </button>
 
         {/* Sun / Moon Quick Header Toggle */}

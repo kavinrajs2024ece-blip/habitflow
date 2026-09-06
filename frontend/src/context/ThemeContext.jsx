@@ -23,7 +23,7 @@ export function ThemeProvider({ children }) {
     } catch {
       // localStorage unavailable or restricted
     }
-    return 'light'; // Default to light mode
+    return 'dark'; // Default to dark mode for unified SaaS theme
   });
 
   // Apply theme attribute to html and body elements

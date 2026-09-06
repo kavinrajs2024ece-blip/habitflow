@@ -3,7 +3,84 @@
    ========================================================================== */
 
 :root {
-  /* Canvas & Surface Layers (Soft Neutral SaaS) */
+  /* Canvas & Surface Layers (Dark Modern SaaS Theme by Default) */
+  --bg-canvas: #0b1120;
+  --bg-canvas-subtle: #070d18;
+  --bg-surface: #0f172a;
+  --bg-surface-elevated: #1e293b;
+  --bg-surface-muted: #1e293b;
+  --bg-surface-hover: #283548;
+
+  /* Borders */
+  --border-subtle: #1e293b;
+  --border-medium: #334155;
+  --border-strong: #475569;
+  --border-focus: #6366f1;
+
+  /* Brand Accents */
+  --accent-primary: #4f46e5;
+  --accent-primary-hover: #4338ca;
+  --accent-primary-subtle: rgba(79, 70, 229, 0.15);
+  --accent-primary-border: rgba(99, 102, 241, 0.3);
+  --accent-secondary: #0891b2;
+
+  /* Semantic State Colors */
+  --color-success: #10b981;
+  --color-success-hover: #059669;
+  --color-success-subtle: rgba(16, 185, 129, 0.15);
+  --color-success-border: rgba(16, 185, 129, 0.3);
+  --color-success-text: #34d399;
+
+  --color-warning: #f59e0b;
+  --color-warning-subtle: rgba(245, 158, 11, 0.15);
+  --color-warning-border: rgba(245, 158, 11, 0.3);
+  --color-warning-text: #fbbf24;
+
+  --color-danger: #ef4444;
+  --color-danger-subtle: rgba(239, 68, 68, 0.15);
+  --color-danger-border: rgba(239, 68, 68, 0.3);
+  --color-danger-text: #f87171;
+
+  /* Typography Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-tertiary: #64748b;
+  --text-disabled: #475569;
+  --text-inverse: #0b1120;
+
+  /* Typography System */
+  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Border Radii */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Multi-Layered Dark Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.35), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.45), 0 4px 6px -4px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.3), 0 8px 24px -4px rgba(0, 0, 0, 0.3);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.4), 0 16px 32px -6px rgba(0, 0, 0, 0.4);
+  --shadow-ring: 0 0 0 3px rgba(99, 102, 241, 0.25);
+
+  /* Animation Easing Curves */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 0.15s;
+  --duration-normal: 0.22s;
+  --duration-smooth: 0.3s;
+}
+
+/* Light Theme Overrides */
+[data-theme='light'],
+:root[data-theme='light'],
+body.light-theme {
   --bg-canvas: #f8fafc;
   --bg-canvas-subtle: #f1f5f9;
   --bg-surface: #ffffff;
@@ -11,20 +88,17 @@
   --bg-surface-muted: #f8fafc;
   --bg-surface-hover: #f1f5f9;
 
-  /* Borders */
   --border-subtle: #e2e8f0;
   --border-medium: #cbd5e1;
   --border-strong: #94a3b8;
   --border-focus: #6366f1;
 
-  /* Brand Accents */
   --accent-primary: #4f46e5;
   --accent-primary-hover: #4338ca;
   --accent-primary-subtle: #eef2ff;
   --accent-primary-border: #c7d2fe;
   --accent-secondary: #0891b2;
 
-  /* Semantic State Colors */
   --color-success: #10b981;
   --color-success-hover: #059669;
   --color-success-subtle: #ecfdf5;
@@ -41,26 +115,12 @@
   --color-danger-border: #fecaca;
   --color-danger-text: #991b1b;
 
-  /* Typography Colors */
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-tertiary: #64748b;
   --text-disabled: #94a3b8;
   --text-inverse: #ffffff;
 
-  /* Typography System */
-  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
-  /* Border Radii */
-  --radius-xs: 4px;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --radius-full: 9999px;
-
-  /* Soft Multi-Layered Shadows */
   --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.04);
   --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
@@ -68,13 +128,6 @@
   --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.04), 0 8px 24px -4px rgba(15, 23, 42, 0.04);
   --shadow-card-hover: 0 4px 12px rgba(15, 23, 42, 0.06), 0 16px 32px -6px rgba(15, 23, 42, 0.06);
   --shadow-ring: 0 0 0 3px rgba(79, 70, 229, 0.15);
-
-  /* Animation Easing Curves */
-  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-  --duration-fast: 0.15s;
-  --duration-normal: 0.22s;
-  --duration-smooth: 0.3s;
 }
 
 /* CSS Resets */
