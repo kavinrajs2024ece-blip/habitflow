@@ -6392,80 +6392,95 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   flex-wrap: wrap;
-  gap: 8px;
+  width: 100%;
 }
 
 .weekly-title-group {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .weekly-title-row {
   display: flex;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .weekly-main-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary, #0f172a);
   margin: 0;
+  white-space: nowrap;
 }
 
 .weekly-subtitle {
   font-size: 0.8rem;
-  color: #94a3b8;
+  color: var(--text-tertiary, #94a3b8);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .weekly-range-badge {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.75rem;
-  color: #64748b;
-  background: #f1f5f9;
-  padding: 2px 8px;
+  color: var(--text-secondary, #64748b);
+  background: var(--bg-surface-muted, #f1f5f9);
+  border: 1px solid var(--border-subtle, #e2e8f0);
+  padding: 3px 10px;
   border-radius: 6px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .weekly-nav-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .btn-week-nav {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-surface-elevated, #f8fafc);
+  border: 1px solid var(--border-medium, #e2e8f0);
   border-radius: 6px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-secondary, #475569);
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.15s ease;
+  user-select: none;
 }
 
 .btn-week-nav:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-  border-color: #cbd5e1;
+  background: var(--bg-surface-hover, #f1f5f9);
+  color: var(--text-primary, #0f172a);
+  border-color: var(--border-strong, #cbd5e1);
 }
 
 .btn-this-week {
-  background: #eff6ff;
+  background: rgba(37, 99, 235, 0.1);
   color: #2563eb;
-  border-color: #bfdbfe;
+  border-color: rgba(37, 99, 235, 0.25);
 }
 
 .btn-this-week:hover {
-  background: #dbeafe;
+  background: rgba(37, 99, 235, 0.18);
   color: #1d4ed8;
 }
 
@@ -7070,15 +7085,30 @@
   }
 
   .weekly-chart-header {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 8px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
     width: 100% !important;
   }
 
+  .weekly-title-group {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+    min-width: 0 !important;
+  }
+
   .weekly-nav-controls {
-    width: 100% !important;
-    justify-content: space-between !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: auto !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
   }
 
   .weekly-bars-wrapper {
