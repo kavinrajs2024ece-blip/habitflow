@@ -1,8 +1,9 @@
 // Centralized API Service Layer for HabitFlow Habits & Records
 import { getToken, clearToken } from './authService';
 
-const BASE_URL = import.meta.env.VITE_API_URL 
-  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+const rawApiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
+const BASE_URL = rawApiUrl 
+  ? (rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`)
   : '/api';
 
 /**

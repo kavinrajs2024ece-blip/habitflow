@@ -4,12 +4,21 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Database file URL (habitflow.db created in the backend root directory)
-SQLALCHEMY_DATABASE_URL = "sqlite:///./habitflow.db"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "habitflow.db")
 
-# Create SQLite Engine
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")
+
+# Fix postgresql:// vs postgresql+psycopg2:// if Postgres is supplied via DATABASE_URL
+if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+
+# Create Database Engine
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    connect_args=connect_args,
 )
 
 

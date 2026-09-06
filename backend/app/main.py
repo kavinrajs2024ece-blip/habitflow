@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi import Depends, FastAPI
@@ -27,17 +28,31 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Allow CORS for local development (Vite default: http://localhost:5173, 5174)
+# Parse additional allowed origins from environment variable (comma-separated)
+custom_origins = [
+    origin.strip()
+    for origin in os.getenv("ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
+# Standard allowed origins: production Netlify app + local development
+default_origins = [
+    "https://trackyourhabitss.netlify.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+allowed_origins = list(dict.fromkeys(default_origins + custom_origins))
+
+# Configure CORS Middleware with Netlify preview regex support
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https:\/\/.*\.netlify\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
