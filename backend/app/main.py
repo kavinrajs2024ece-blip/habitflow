@@ -36,14 +36,22 @@ custom_origins = [
 ]
 
 # Standard allowed origins: production Netlify app + local development
+# Standard allowed origins: production Netlify + local development + Capacitor mobile app
 default_origins = [
     "https://trackyourhabitss.netlify.app",
+
+    # React/Vite development
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+
+    # Capacitor Android/iOS app
+    "http://localhost",
+    "https://localhost",
+    "capacitor://localhost",
 ]
 
 allowed_origins = list(dict.fromkeys(default_origins + custom_origins))
@@ -85,7 +93,7 @@ def health_check(db: Session = Depends(get_db)):
     return {
         "status": "ok",
         "app": "HabitFlow — Digital Habit Tracker",
-        "version": "0.1.0",
+        "version": "0.2.0",
         "database": db_status,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
