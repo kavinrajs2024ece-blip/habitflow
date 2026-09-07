@@ -1,6 +1,9 @@
 from datetime import date
 from typing import List, Optional, Tuple
+from sqlalchemy import func
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from fastapi import HTTPException, status
 
 from app import models, schemas
 from app.core.security import get_password_hash
@@ -9,8 +12,11 @@ from app.core.security import get_password_hash
 # --- User CRUD Operations ---
 
 def get_user_by_email(db: Session, email: str) -> Optional[models.User]:
-    """Retrieve a user by their unique email address (case-insensitive)."""
-    return db.query(models.User).filter(models.User.email == email.lower().strip()).first()
+    """Retrieve a user by their unique email address (case-insensitive across all DB dialects)."""
+    if not email:
+        return None
+    normalized_email = email.lower().strip()
+    return db.query(models.User).filter(func.lower(models.User.email) == normalized_email).first()
 
 
 def get_user_by_id(db: Session, user_id: int) -> Optional[models.User]:
@@ -19,17 +25,26 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[models.User]:
 
 
 def create_user(db: Session, user_in: schemas.UserCreate) -> models.User:
-    """Create a new user with a bcrypt-hashed password."""
+    """Create a new user with a bcrypt-hashed password, safely handling race conditions with DB constraints."""
     hashed_pw = get_password_hash(user_in.password)
+    normalized_email = user_in.email.lower().strip()
     db_user = models.User(
         name=user_in.name.strip(),
-        email=user_in.email.lower().strip(),
+        email=normalized_email,
         password_hash=hashed_pw,
     )
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+    try:
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered. Please login.",
+        )
+
 
 
 # --- Habit CRUD Operations ---

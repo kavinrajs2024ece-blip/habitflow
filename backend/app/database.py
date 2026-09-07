@@ -13,21 +13,33 @@ SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH
 if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
     SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-connect_args = {"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+is_sqlite = SQLALCHEMY_DATABASE_URL.startswith("sqlite")
 
 # Create Database Engine
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args=connect_args,
-)
+if is_sqlite:
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        connect_args={"check_same_thread": False},
+    )
+else:
+    # Production PostgreSQL with connection health checks & pooling
+    engine = create_engine(
+        SQLALCHEMY_DATABASE_URL,
+        pool_pre_ping=True,
+        pool_size=10,
+        max_overflow=20,
+    )
 
 
-# Enforce SQLite foreign key constraints on connection
+# Enforce SQLite foreign key constraints only on SQLite connections
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+    module_name = getattr(dbapi_connection.__class__, "__module__", "")
+    if "sqlite" in module_name.lower():
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
+
 
 
 # Database Session Factory

@@ -1,5 +1,5 @@
 import logging
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
@@ -10,22 +10,21 @@ logger = logging.getLogger("habitflow.migration")
 
 def run_migrations(engine: Engine) -> None:
     """
-    Safely applies SQLite database migrations to ensure the multi-user
+    Safely applies database migrations to ensure the multi-user
     schema is active without losing any existing habits or daily records.
+    Compatible with both SQLite and PostgreSQL.
     """
     with engine.connect() as conn:
-        # 1. Check if habits table exists
-        tables_res = conn.execute(
-            text("SELECT name FROM sqlite_master WHERE type='table' AND name='habits';")
-        ).fetchone()
+        inspector = inspect(conn)
 
-        if not tables_res:
+        # 1. Check if habits table exists
+        if not inspector.has_table("habits"):
             # Table doesn't exist yet; Base.metadata.create_all will handle it
             return
 
         # 2. Inspect existing columns of the habits table
-        columns_info = conn.execute(text("PRAGMA table_info(habits);")).fetchall()
-        column_names = [col[1] for col in columns_info]
+        column_names = [col["name"] for col in inspector.get_columns("habits")]
+
 
         # 3. Add user_id column if it doesn't exist yet
         if "user_id" not in column_names:

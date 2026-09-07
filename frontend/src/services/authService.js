@@ -46,14 +46,41 @@ async function parseErrorResponse(response) {
   try {
     const errorData = await response.json();
     if (errorData.detail) {
-      message = typeof errorData.detail === 'string'
-        ? errorData.detail
-        : JSON.stringify(errorData.detail);
+      if (typeof errorData.detail === 'string') {
+        message = errorData.detail;
+      } else if (Array.isArray(errorData.detail)) {
+        message = errorData.detail.map((d) => d.msg || d.message).join(', ');
+      } else {
+        message = JSON.stringify(errorData.detail);
+      }
     }
   } catch {
-    // Non-JSON response
+    if (response.status >= 500) {
+      message = 'Unable to connect to server';
+    }
   }
+
+  // Normalize standard error messages
+  if (response.status === 401) {
+    message = 'Invalid email or password';
+  } else if (response.status === 400 && message.toLowerCase().includes('already registered')) {
+    message = 'Email already registered. Please login.';
+  } else if (response.status >= 502 && response.status <= 504) {
+    message = 'Unable to connect to server';
+  }
+
   return new Error(message);
+}
+
+function handleFetchError(err) {
+  if (
+    err instanceof TypeError ||
+    err.name === 'AbortError' ||
+    (err.message && (err.message.includes('fetch') || err.message.includes('NetworkError') || err.message.includes('Failed to fetch')))
+  ) {
+    throw new Error('Unable to connect to server');
+  }
+  throw err;
 }
 
 /**
@@ -61,11 +88,16 @@ async function parseErrorResponse(response) {
  * Returns: { access_token, token_type, user }
  */
 export const login = async ({ email, password }) => {
-  const response = await fetch(`${BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email: email.trim(), password }),
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim(), password }),
+    });
+  } catch (err) {
+    handleFetchError(err);
+  }
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -83,15 +115,20 @@ export const login = async ({ email, password }) => {
  * Returns safe user object: { id, name, email, created_at }
  */
 export const register = async ({ name, email, password }) => {
-  const response = await fetch(`${BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: name.trim(),
-      email: email.trim(),
-      password,
-    }),
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      }),
+    });
+  } catch (err) {
+    handleFetchError(err);
+  }
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -110,13 +147,18 @@ export const getCurrentUser = async () => {
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${BASE_URL}/auth/me`, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  } catch (err) {
+    handleFetchError(err);
+  }
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -138,14 +180,19 @@ export const updateProfile = async ({ name }) => {
     throw new Error('No authentication token found');
   }
 
-  const response = await fetch(`${BASE_URL}/auth/me`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ name: (name || '').trim() }),
-  });
+  let response;
+  try {
+    response = await fetch(`${BASE_URL}/auth/me`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ name: (name || '').trim() }),
+    });
+  } catch (err) {
+    handleFetchError(err);
+  }
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -156,6 +203,7 @@ export const updateProfile = async ({ name }) => {
 
   return await response.json();
 };
+
 
 export default {
   getToken,

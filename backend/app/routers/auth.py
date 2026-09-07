@@ -25,10 +25,11 @@ def register_user(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A user with this email address is already registered",
+            detail="Email already registered. Please login.",
         )
 
     return crud.create_user(db=db, user_in=user_in)
+
 
 
 @router.post(
