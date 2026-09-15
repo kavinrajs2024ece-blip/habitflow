@@ -11764,5 +11764,942 @@ body.dark-theme {
   color: #94a3b8 !important;
 }
 
+/* ==========================================================================
+   HABITFLOW UPGRADES: MOBILE RESPONSIVENESS, BOTTOM NAV & MODERN REDESIGN
+   ========================================================================== */
 
+/* Utility Visibility Classes */
+.mobile-only-block {
+  display: none !important;
+}
+.mobile-only-flex {
+  display: none !important;
+}
+.desktop-only-block {
+  display: block;
+}
+.desktop-only-inline {
+  display: inline-flex;
+}
 
+/* --------------------------------------------------------------------------
+   1. MOBILE COMPACT HEADER
+   -------------------------------------------------------------------------- */
+.mobile-app-header {
+  display: none;
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  height: 56px;
+  background-color: var(--bg-surface, #0f172a);
+  border-bottom: 1px solid var(--border-subtle, #1e293b);
+  padding: env(safe-area-inset-top, 0px) 16px 0 16px;
+  align-items: center;
+  justify-content: space-between;
+  backdrop-filter: blur(12px);
+}
+
+.mobile-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mobile-brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-brand-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #f8fafc);
+}
+
+.mobile-brand-title .text-indigo {
+  color: #6366f1;
+}
+
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mobile-header-btn {
+  background: var(--bg-surface-elevated, #1e293b);
+  border: 1px solid var(--border-medium, #334155);
+  color: var(--text-primary, #f8fafc);
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.18s ease;
+}
+
+.mobile-header-btn:active {
+  transform: scale(0.95);
+}
+
+.mobile-bell-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: #6366f1;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg-surface, #0f172a);
+}
+
+.mobile-avatar-wrap {
+  position: relative;
+}
+
+.mobile-header-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 2px solid var(--border-medium, #334155);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.18s ease;
+}
+
+.mobile-header-avatar:active {
+  transform: scale(0.95);
+}
+
+.mobile-profile-dropdown {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  width: 240px;
+  background: var(--bg-surface-elevated, #1e293b);
+  border: 1px solid var(--border-medium, #334155);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: dropdownIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-profile-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 4px 8px 4px;
+}
+
+.mobile-profile-initial {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #6366f1;
+  color: #ffffff;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.mobile-profile-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mobile-profile-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-profile-email {
+  font-size: 0.725rem;
+  color: var(--text-secondary, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-dropdown-divider {
+  height: 1px;
+  background: var(--border-subtle, #334155);
+  margin: 6px 0;
+}
+
+.mobile-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary, #f8fafc);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.mobile-dropdown-item:active,
+.mobile-dropdown-item:hover {
+  background: var(--bg-surface-hover, #334155);
+}
+
+.mobile-logout-item {
+  color: #ef4444;
+}
+
+/* --------------------------------------------------------------------------
+   2. MOBILE BOTTOM NAVIGATION BAR
+   -------------------------------------------------------------------------- */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 95;
+  background-color: var(--bg-surface, #0f172a);
+  border-top: 1px solid var(--border-subtle, #1e293b);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.mobile-bottom-nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.mobile-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 48px;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary, #64748b);
+  cursor: pointer;
+  position: relative;
+  padding: 4px 0;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.mobile-nav-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
+  transition: transform 0.18s ease;
+}
+
+.mobile-nav-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2px;
+  transition: color 0.18s ease;
+}
+
+.mobile-nav-item.active {
+  color: #6366f1;
+}
+
+.mobile-nav-item.active .mobile-nav-icon-wrapper {
+  transform: translateY(-1px);
+}
+
+.mobile-nav-indicator {
+  position: absolute;
+  bottom: 3px;
+  width: 16px;
+  height: 3px;
+  border-radius: 9999px;
+  background: #6366f1;
+}
+
+/* --------------------------------------------------------------------------
+   3. MOBILE FLOATING ADD BUTTON
+   -------------------------------------------------------------------------- */
+.mobile-floating-add-btn {
+  display: none;
+  position: fixed;
+  right: 18px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 74px);
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+  align-items: center;
+  justify-content: center;
+  z-index: 85;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.mobile-floating-add-btn:active {
+  transform: scale(0.92);
+}
+
+/* --------------------------------------------------------------------------
+   4. DASHBOARD REDESIGN HERO, STATS & CARDS
+   -------------------------------------------------------------------------- */
+.card-elevated {
+  background: var(--bg-surface-elevated, #1e293b);
+  border: 1px solid var(--border-medium, #334155);
+  border-radius: 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+
+/* Mobile Hero Greeting */
+.mobile-greeting-hero {
+  padding: 4px 0 14px 0;
+}
+
+.mobile-greeting-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--text-primary, #f8fafc);
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.mobile-greeting-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #94a3b8);
+  margin: 4px 0 0 0;
+}
+
+/* Mobile 3 Stats Row */
+.mobile-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mobile-stat-card {
+  background: var(--bg-surface-elevated, #1e293b);
+  border: 1px solid var(--border-medium, #334155);
+  border-radius: 14px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-stat-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* Mobile Circular Progress Card */
+.mobile-progress-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.mobile-progress-ring-wrap {
+  flex-shrink: 0;
+}
+
+.mobile-progress-text-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-progress-tag {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: #818cf8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mobile-progress-fraction {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--text-primary, #f8fafc);
+  margin: 2px 0;
+  letter-spacing: -0.01em;
+}
+
+.mobile-progress-sub {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #94a3b8);
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   5. UPCOMING REMINDER BANNER
+   -------------------------------------------------------------------------- */
+.dashboard-reminder-banner {
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.reminder-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-banner-icon-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #818cf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reminder-bell-ringing {
+  animation: bellSway 2s infinite ease-in-out;
+}
+
+@keyframes bellSway {
+  0%, 100% { transform: rotate(0deg); }
+  15% { transform: rotate(14deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(8deg); }
+  60% { transform: rotate(-8deg); }
+  75% { transform: rotate(0deg); }
+}
+
+.reminder-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-banner-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #818cf8;
+  display: block;
+}
+
+.reminder-banner-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+  margin: 1px 0 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reminder-banner-time {
+  font-size: 0.78rem;
+  color: #38bdf8;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.reminder-banner-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary, #94a3b8);
+  margin: 0;
+}
+
+.reminder-banner-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: #6366f1;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Habit Card Reminder Pill */
+.habit-reminder-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 3px;
+  width: fit-content;
+}
+
+/* Habit Card Touch Targets & Completed State */
+.btn-habit-daily-complete {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn-habit-daily-complete.is-pending {
+  background: #4f46e5;
+  color: #ffffff;
+  border: 1px solid #6366f1;
+}
+
+.btn-habit-daily-complete.is-pending:hover {
+  background: #4338ca;
+}
+
+.btn-habit-daily-complete.is-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.habit-ref-card.habit-card-is-completed {
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   6. REMINDER SETTINGS TOGGLE SWITCH & INPUTS
+   -------------------------------------------------------------------------- */
+.reminder-form-group {
+  background: var(--bg-surface-elevated, #1e293b);
+  border: 1px solid var(--border-medium, #334155);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.reminder-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.reminder-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reminder-bell-icon {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.reminder-title {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+}
+
+.reminder-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-secondary, #94a3b8);
+}
+
+/* iOS / Android style Switch Slider */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-strong, #475569);
+  transition: 0.25s;
+  border-radius: 34px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.25s;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.switch-toggle input:checked + .switch-slider {
+  background-color: #6366f1;
+}
+
+.switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(22px);
+}
+
+.reminder-time-picker-box {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle, #334155);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.time-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface, #0f172a);
+  border: 1px solid var(--border-medium, #334155);
+  border-radius: 10px;
+  padding: 6px 12px;
+  min-height: 44px;
+}
+
+.time-clock-icon {
+  color: #818cf8;
+}
+
+.reminder-time-input {
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-primary, #f8fafc) !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  padding: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  width: 110px;
+}
+
+.reminder-time-hint {
+  font-size: 0.725rem;
+  color: var(--text-tertiary, #64748b);
+}
+
+/* Reminders Overview Modal */
+.mobile-reminders-modal {
+  max-width: 440px;
+  width: 90%;
+}
+
+.reminders-modal-body {
+  padding: 16px 20px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.no-reminders-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.no-reminders-empty h4 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+  margin: 12px 0 6px 0;
+}
+
+.no-reminders-empty p {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.active-reminders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.active-reminder-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-surface, #0f172a);
+  border: 1px solid var(--border-subtle, #334155);
+  border-radius: 12px;
+}
+
+.reminder-habit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reminder-habit-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary, #f8fafc);
+}
+
+.reminder-habit-schedule {
+  font-size: 0.725rem;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.reminder-time-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  color: #818cf8;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.btn-full-width {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   7. RESPONSIVE BREAKPOINTS (Mobile vs Desktop)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Hide Desktop Elements */
+  .sidebar,
+  .desktop-header-wrap,
+  .desktop-header-only,
+  .desktop-only-block,
+  .desktop-only-inline {
+    display: none !important;
+  }
+
+  /* Show Mobile Elements */
+  .mobile-app-header {
+    display: flex !important;
+  }
+
+  .mobile-bottom-nav {
+    display: flex !important;
+  }
+
+  .mobile-floating-add-btn {
+    display: flex !important;
+  }
+
+  .mobile-only-block {
+    display: block !important;
+  }
+
+  .mobile-only-flex {
+    display: flex !important;
+  }
+
+  /* Main Viewport Mobile Constraints */
+  .app-shell {
+    display: block !important;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .main-viewport {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    overflow-x: hidden;
+  }
+
+  .content-container {
+    padding: 12px 14px calc(env(safe-area-inset-bottom, 0px) + 82px) 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: hidden;
+  }
+
+  /* Habit Cards Grid in Mobile: 1 Full-width Column */
+  .habits-desktop-4col-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  .habit-ref-card {
+    min-height: auto !important;
+    width: 100% !important;
+  }
+
+  /* Subrow layout: Stack on mobile */
+  .dashboard-subrow-layout {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .dashboard-main-two-col-layout {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .dashboard-left-main-area {
+    width: 100% !important;
+  }
+
+  /* Responsive Calendar View */
+  .calendar-view-container {
+    width: 100% !important;
+    overflow-x: hidden;
+  }
+
+  .calendar-card {
+    padding: 12px !important;
+  }
+
+  .calendar-grid-cells {
+    gap: 4px !important;
+  }
+
+  .calendar-cell {
+    min-height: 38px !important;
+    padding: 4px !important;
+  }
+
+  .cal-legend-bar {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Responsive Analytics / Stats View */
+  .stats-overview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Form & Modal Touch Targets */
+  .form-input,
+  .btn,
+  .btn-primary,
+  .btn-outline,
+  .cat-option-btn {
+    min-height: 44px !important;
+  }
+
+  .modal-container {
+    width: 94% !important;
+    max-width: 460px !important;
+    padding: 16px !important;
+    margin: 10px auto !important;
+  }
+}
+
+@media (min-width: 769px) {
+  /* On desktop, ensure mobile headers and bars are completely hidden */
+  .mobile-app-header,
+  .mobile-bottom-nav,
+  .mobile-floating-add-btn,
+  .mobile-only-block,
+  .mobile-only-flex {
+    display: none !important;
+  }
+
+  .desktop-header-wrap,
+  .desktop-header-only {
+    display: block !important;
+  }
+}

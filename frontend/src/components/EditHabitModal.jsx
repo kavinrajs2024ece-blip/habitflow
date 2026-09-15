@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Edit3, Save, Loader2 } from 'lucide-react';
+import { X, Edit3, Save, Loader2, Bell, Clock } from 'lucide-react';
 import { CATEGORIES, parseHabitGoal, getCleanDescription, formatHabitDescription } from '../utils/dateUtils';
+import { requestNotificationPermission } from '../services/notificationService';
 
 export default function EditHabitModal({ 
   isOpen, 
@@ -13,6 +14,8 @@ export default function EditHabitModal({
   const [description, setDescription] = useState('');
   const [goalDays, setGoalDays] = useState(30);
   const [category, setCategory] = useState(CATEGORIES[0]);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState('08:30');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -38,6 +41,8 @@ export default function EditHabitModal({
       setCategory(foundCat);
       setGoalDays(parsedGoal);
       setDescription(cleanDesc);
+      setReminderEnabled(Boolean(habit.reminder_enabled));
+      setReminderTime(habit.reminder_time || '08:30');
       setError('');
     }
   }, [isOpen, habit]);
@@ -55,6 +60,14 @@ export default function EditHabitModal({
 
   if (!isOpen) return null;
 
+  const handleReminderToggle = async (e) => {
+    const checked = e.target.checked;
+    setReminderEnabled(checked);
+    if (checked) {
+      await requestNotificationPermission();
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
@@ -68,6 +81,11 @@ export default function EditHabitModal({
       return;
     }
 
+    if (reminderEnabled && !reminderTime) {
+      setError('Please select a valid reminder time');
+      return;
+    }
+
     try {
       setError('');
       const formattedDescription = formatHabitDescription(category.name, parsedGoal, description);
@@ -75,6 +93,8 @@ export default function EditHabitModal({
       await onSaveHabit({
         name: name.trim(),
         description: formattedDescription,
+        reminder_enabled: reminderEnabled,
+        reminder_time: reminderEnabled ? reminderTime : null,
       });
       onClose();
     } catch (err) {
@@ -189,6 +209,47 @@ export default function EditHabitModal({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Daily Reminder Setting */}
+          <div className="form-group reminder-form-group">
+            <div className="reminder-toggle-row">
+              <div className="reminder-toggle-label">
+                <Bell size={18} className="reminder-bell-icon" />
+                <div>
+                  <span className="reminder-title">Daily Reminder</span>
+                  <span className="reminder-subtitle">Get notified on your device every day</span>
+                </div>
+              </div>
+              <label className="switch-toggle" htmlFor="edit-reminder-toggle">
+                <input
+                  id="edit-reminder-toggle"
+                  type="checkbox"
+                  checked={reminderEnabled}
+                  onChange={handleReminderToggle}
+                  disabled={isSaving}
+                />
+                <span className="switch-slider" />
+              </label>
+            </div>
+
+            {reminderEnabled && (
+              <div className="reminder-time-picker-box">
+                <div className="time-input-wrap">
+                  <Clock size={16} className="time-clock-icon" />
+                  <input
+                    type="time"
+                    id="edit-reminder-time"
+                    className="form-input reminder-time-input"
+                    value={reminderTime}
+                    onChange={(e) => setReminderTime(e.target.value)}
+                    disabled={isSaving}
+                    aria-label="Daily reminder time"
+                  />
+                </div>
+                <span className="reminder-time-hint">Notifications scheduled daily</span>
+              </div>
+            )}
           </div>
 
           <div className="modal-actions">

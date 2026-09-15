@@ -75,6 +75,8 @@ export const createHabit = (habitData) => {
     body: JSON.stringify({
       name: habitData.name.trim(),
       description: habitData.description?.trim() || null,
+      reminder_enabled: Boolean(habitData.reminder_enabled),
+      reminder_time: habitData.reminder_time || null,
     }),
   });
 };

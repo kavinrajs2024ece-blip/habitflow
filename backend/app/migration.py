@@ -79,3 +79,21 @@ def run_migrations(engine: Engine) -> None:
             logger.info(
                 f"Successfully linked {unassigned_count} existing habits to user {demo_user_id} (demo@habitflow.com)."
             )
+
+        # 5. Add reminder_enabled column if it doesn't exist yet
+        if "reminder_enabled" not in column_names:
+            logger.info("Migrating database: Adding 'reminder_enabled' column to 'habits' table...")
+            conn.execute(
+                text("ALTER TABLE habits ADD COLUMN reminder_enabled BOOLEAN DEFAULT FALSE;")
+            )
+            conn.commit()
+            logger.info("Column 'reminder_enabled' successfully added to 'habits'.")
+
+        # 6. Add reminder_time column if it doesn't exist yet
+        if "reminder_time" not in column_names:
+            logger.info("Migrating database: Adding 'reminder_time' column to 'habits' table...")
+            conn.execute(
+                text("ALTER TABLE habits ADD COLUMN reminder_time VARCHAR;")
+            )
+            conn.commit()
+            logger.info("Column 'reminder_time' successfully added to 'habits'.")

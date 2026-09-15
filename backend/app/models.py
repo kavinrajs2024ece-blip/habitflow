@@ -52,6 +52,8 @@ class Habit(Base):
     )
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
+    reminder_enabled = Column(Boolean, default=False, nullable=False)
+    reminder_time = Column(String, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

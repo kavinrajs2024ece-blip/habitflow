@@ -56,6 +56,8 @@ def create_habit(
     db_habit = models.Habit(
         name=habit_in.name.strip(),
         description=habit_in.description.strip() if habit_in.description else None,
+        reminder_enabled=bool(habit_in.reminder_enabled),
+        reminder_time=habit_in.reminder_time.strip() if habit_in.reminder_time else None,
         user_id=user_id,
     )
     db.add(db_habit)
@@ -93,11 +95,15 @@ def get_habit_by_id(
 def update_habit(
     db: Session, db_habit: models.Habit, habit_update: schemas.HabitUpdate
 ) -> models.Habit:
-    """Update an existing habit's name or description."""
+    """Update an existing habit's name, description, or reminder settings."""
     if habit_update.name is not None:
         db_habit.name = habit_update.name.strip()
     if habit_update.description is not None:
         db_habit.description = habit_update.description.strip() if habit_update.description else None
+    if habit_update.reminder_enabled is not None:
+        db_habit.reminder_enabled = bool(habit_update.reminder_enabled)
+    if habit_update.reminder_time is not None:
+        db_habit.reminder_time = habit_update.reminder_time.strip() if habit_update.reminder_time else None
 
     db.commit()
     db.refresh(db_habit)

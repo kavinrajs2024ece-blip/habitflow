@@ -47,6 +47,8 @@ class TokenData(BaseModel):
 class HabitBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Name of the habit")
     description: Optional[str] = Field(None, max_length=500, description="Optional description of the habit")
+    reminder_enabled: Optional[bool] = Field(False, description="Whether daily reminder is enabled")
+    reminder_time: Optional[str] = Field(None, max_length=10, description="Reminder time in HH:MM format")
 
 
 class HabitCreate(HabitBase):
@@ -56,11 +58,15 @@ class HabitCreate(HabitBase):
 class HabitUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Updated name of the habit")
     description: Optional[str] = Field(None, max_length=500, description="Updated description of the habit")
+    reminder_enabled: Optional[bool] = Field(None, description="Whether daily reminder is enabled")
+    reminder_time: Optional[str] = Field(None, max_length=10, description="Reminder time in HH:MM format")
 
 
 class HabitResponse(HabitBase):
     id: int
     user_id: int
+    reminder_enabled: bool = False
+    reminder_time: Optional[str] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

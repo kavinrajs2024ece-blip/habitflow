@@ -4,6 +4,8 @@ import './App.css';
 // Components
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
+import MobileHeader from './components/MobileHeader';
+import BottomNavBar from './components/BottomNavBar';
 import WelcomeBanner from './components/WelcomeBanner';
 import ProgressSummary from './components/ProgressSummary';
 import HabitList from './components/HabitList';
@@ -22,6 +24,14 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 // API Service Layer
 import * as api from './services/api';
 
+// Notification Service Layer (Capacitor Local Notifications)
+import { 
+  scheduleHabitReminder, 
+  cancelHabitReminder, 
+  updateHabitReminder, 
+  syncAllHabitReminders 
+} from './services/notificationService';
+
 // Date Utilities
 import { 
   getTodayKey, 
@@ -29,7 +39,7 @@ import {
   formatDateKey 
 } from './utils/dateUtils';
 
-import { Loader2, AlertTriangle, RefreshCw, Sparkles, Calendar, BarChart2, CheckCircle2 } from 'lucide-react';
+import { Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 
 function HabitDashboard() {
   const { user } = useAuth();
@@ -50,18 +60,16 @@ function HabitDashboard() {
 
   const todayKey = getTodayKey();
   const past7Days = getPastDays(7);
-  const past30Days = getPastDays(30);
   const past365Days = getPastDays(365);
   const startDate = formatDateKey(past365Days[0]);
 
   /**
-   * Load habits and records from the FastAPI backend & SQLite database
+   * Load habits and records from the FastAPI backend & database
    */
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // 1. Fetch habits and past 180 days of records in parallel
       const [fetchedHabits, fetchedRecords] = await Promise.all([
         api.getHabits(),
         api.getRecordsRange(startDate, todayKey),
@@ -69,7 +77,9 @@ function HabitDashboard() {
 
       setHabits(fetchedHabits);
 
-      // 2. Convert record array to key-value lookup map: "habitId_date" -> completed (bool)
+      // Sync active habit reminders with Android Local Notifications
+      syncAllHabitReminders(fetchedHabits);
+
       const recordMap = {};
       fetchedRecords.forEach((rec) => {
         recordMap[`${rec.habit_id}_${rec.record_date}`] = Boolean(rec.completed);
@@ -78,7 +88,7 @@ function HabitDashboard() {
     } catch (err) {
       setError(
         err.message || 
-        'Could not connect to FastAPI server. Please verify the backend is running on port 8000.'
+        'Could not connect to FastAPI server. Please verify the backend is running.'
       );
     } finally {
       setLoading(false);
@@ -106,16 +116,12 @@ function HabitDashboard() {
     setTogglingIds((prev) => ({ ...prev, [habitId]: true }));
 
     try {
-      // Persist to SQLite backend: POST /api/habits/{id}/records
       const savedRecord = await api.upsertHabitRecord(habitId, todayKey, nextStatus);
-      
-      // Sync confirmed state from server response
       setRecords((prev) => ({
         ...prev,
         [`${savedRecord.habit_id}_${savedRecord.record_date}`]: Boolean(savedRecord.completed),
       }));
     } catch (err) {
-      // Revert optimistic update on failure
       setRecords((prev) => ({
         ...prev,
         [key]: previousStatus,
@@ -127,23 +133,27 @@ function HabitDashboard() {
   };
 
   /**
-   * Create a new habit via POST /api/habits
+   * Create a new habit via POST /api/habits and schedule local reminder
    */
   const handleAddHabit = async (newHabitData) => {
     setIsSubmittingHabit(true);
     try {
       const createdHabit = await api.createHabit(newHabitData);
-      // Prepend newly created habit to list
       setHabits((prev) => [createdHabit, ...prev]);
+
+      // Schedule notification if enabled
+      if (createdHabit.reminder_enabled && createdHabit.reminder_time) {
+        await scheduleHabitReminder(createdHabit);
+      }
     } catch (err) {
-      throw err; // Passed to modal to display error alert
+      throw err;
     } finally {
       setIsSubmittingHabit(false);
     }
   };
 
   /**
-   * Delete a habit via DELETE /api/habits/{id}
+   * Delete a habit via DELETE /api/habits/{id} and cancel local notification
    */
   const handleDeleteHabit = async (habitId) => {
     if (!window.confirm("Are you sure you want to delete this habit and all its records?")) {
@@ -153,7 +163,9 @@ function HabitDashboard() {
     setDeletingIds((prev) => ({ ...prev, [habitId]: true }));
     try {
       await api.deleteHabit(habitId);
-      // Remove habit from UI state
+      // Cancel scheduled reminder if any
+      await cancelHabitReminder(habitId);
+
       setHabits((prev) => prev.filter((h) => h.id !== habitId));
       if (selectedHabitId === habitId) {
         setSelectedHabitId(null);
@@ -164,6 +176,14 @@ function HabitDashboard() {
     } finally {
       setDeletingIds((prev) => ({ ...prev, [habitId]: false }));
     }
+  };
+
+  /**
+   * Handle habit updates (from habit detail page or modal)
+   */
+  const handleHabitUpdated = async (updatedHabit) => {
+    setHabits((prev) => prev.map((h) => h.id === updatedHabit.id ? updatedHabit : h));
+    await updateHabitReminder(updatedHabit);
   };
 
   /**
@@ -186,7 +206,13 @@ function HabitDashboard() {
 
   return (
     <div className="app-shell">
-      {/* Sidebar Navigation */}
+      {/* Mobile-Only Compact Header (Sticky Top on small screens) */}
+      <MobileHeader
+        onNavigateView={setActiveView}
+        habits={habits}
+      />
+
+      {/* Desktop-Only Sidebar Navigation */}
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
@@ -196,15 +222,17 @@ function HabitDashboard() {
 
       {/* Main App Canvas */}
       <div className="main-viewport">
-        {/* Top Header for non-dashboard subpages */}
+        {/* Desktop Top Header for subpages (Calendar, Habits, Analytics, Profile, Settings) */}
         {activeView !== 'dashboard' && (
-          <Header
-            onOpenSidebar={() => setMobileSidebarOpen(true)}
-            onOpenAddModal={() => setIsAddModalOpen(true)}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onNavigateView={setActiveView}
-          />
+          <div className="desktop-header-wrap">
+            <Header
+              onOpenSidebar={() => setMobileSidebarOpen(true)}
+              onOpenAddModal={() => setIsAddModalOpen(true)}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onNavigateView={setActiveView}
+            />
+          </div>
         )}
 
         {/* Dynamic View Canvas */}
@@ -285,12 +313,11 @@ function HabitDashboard() {
                   habitId={selectedHabitId}
                   onBack={() => setActiveView('dashboard')}
                   onGlobalRecordUpdated={handleGlobalRecordUpdated}
-                  onHabitUpdated={(updatedHabit) => {
-                    setHabits((prev) => prev.map((h) => h.id === updatedHabit.id ? updatedHabit : h));
-                  }}
+                  onHabitUpdated={handleHabitUpdated}
                   onHabitDeleted={(deletedId) => {
                     setHabits((prev) => prev.filter((h) => h.id !== deletedId));
                     setSelectedHabitId(null);
+                    cancelHabitReminder(deletedId);
                   }}
                 />
               )}
@@ -300,7 +327,7 @@ function HabitDashboard() {
                   <div className="section-title-wrap">
                     <div>
                       <h2 className="section-title">Habit History & Heatmap</h2>
-                      <p className="section-sub">Inspect completion records saved in SQLite for each calendar day</p>
+                      <p className="section-sub">Inspect completion records saved in the database for each calendar day</p>
                     </div>
                   </div>
                   <CalendarView
@@ -340,6 +367,12 @@ function HabitDashboard() {
           )}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation Bar (Sticky Bottom on small screens) */}
+      <BottomNavBar 
+        activeView={activeView === 'habit-detail' ? 'habits' : activeView}
+        setActiveView={setActiveView}
+      />
 
       {/* Add Habit Modal */}
       <AddHabitModal

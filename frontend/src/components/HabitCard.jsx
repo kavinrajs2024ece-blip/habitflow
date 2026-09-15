@@ -13,9 +13,11 @@ import {
   Sparkles, 
   ArrowRight, 
   Loader2, 
-  CheckCircle2 
+  CheckCircle2,
+  Bell
 } from 'lucide-react';
 import { formatDateKey, calculateStreak, parseHabitGoal, getCleanDescription } from '../utils/dateUtils';
+import { formatDisplayTime } from '../services/notificationService';
 import CircularProgress from './CircularProgress';
 
 // Helper to determine specific reference-styled icon and theme
@@ -163,6 +165,12 @@ export default function HabitCard({
             <p className="habit-ref-sub" title={cleanDescription}>
               {cleanDescription || 'Daily consistency goal'}
             </p>
+            {habit.reminder_enabled && habit.reminder_time && (
+              <div className="habit-reminder-pill" title={`Reminder scheduled for ${formatDisplayTime(habit.reminder_time)}`}>
+                <Bell size={11} className="reminder-pill-bell" />
+                <span>{formatDisplayTime(habit.reminder_time)}</span>
+              </div>
+            )}
           </div>
         </div>
 
