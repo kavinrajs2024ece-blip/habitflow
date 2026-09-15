@@ -46,6 +46,22 @@ def create_user(db: Session, user_in: schemas.UserCreate) -> models.User:
         )
 
 
+def update_user(
+    db: Session, db_user: models.User, user_update: schemas.UserUpdate
+) -> models.User:
+    """Update an existing user's name or daily reminder preferences."""
+    if user_update.name is not None:
+        db_user.name = user_update.name.strip()
+    if user_update.daily_reminder_enabled is not None:
+        db_user.daily_reminder_enabled = bool(user_update.daily_reminder_enabled)
+    if user_update.daily_reminder_time is not None:
+        db_user.daily_reminder_time = user_update.daily_reminder_time.strip()
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
 
 # --- Habit CRUD Operations ---
 

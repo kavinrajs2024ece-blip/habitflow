@@ -8,6 +8,8 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 class UserBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100, description="Full name of the user")
     email: EmailStr = Field(..., description="Unique email address of the user")
+    daily_reminder_enabled: Optional[bool] = Field(False, description="Global daily habit reminder status")
+    daily_reminder_time: Optional[str] = Field("20:00", max_length=10, description="Global daily reminder time (HH:MM)")
 
 
 class UserCreate(UserBase):
@@ -23,10 +25,14 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=100, description="Updated full name of user")
+    daily_reminder_enabled: Optional[bool] = Field(None, description="Global daily habit reminder status")
+    daily_reminder_time: Optional[str] = Field(None, max_length=10, description="Global daily reminder time (HH:MM)")
 
 
 class UserResponse(UserBase):
     id: int
+    daily_reminder_enabled: bool = False
+    daily_reminder_time: Optional[str] = "20:00"
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

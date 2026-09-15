@@ -125,3 +125,11 @@ export const getHabitStatistics = (habitId, period = 'week', targetDate = null) 
   if (targetDate) query += `&target_date=${targetDate}`;
   return apiRequest(`/habits/${habitId}/statistics${query}`);
 };
+
+export const updateUserProfile = (userData) => {
+  return apiRequest('/auth/me', {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  });
+};
+

@@ -189,14 +189,184 @@ export async function updateHabitReminder(habit) {
 }
 
 /**
- * Sync all active habits with local notifications (e.g. on initial app load)
+ * Global Daily Habit Reminder Notification ID
  */
-export async function syncAllHabitReminders(habits = []) {
-  if (!Array.isArray(habits)) return;
+export const GLOBAL_REMINDER_NOTIFICATION_ID = 999999;
 
-  for (const habit of habits) {
-    if (habit && habit.reminder_enabled && habit.reminder_time) {
-      await scheduleHabitReminder(habit);
+const GLOBAL_REMINDER_STORAGE_KEY_ENABLED = 'habitflow_global_reminder_enabled';
+const GLOBAL_REMINDER_STORAGE_KEY_TIME = 'habitflow_global_reminder_time';
+
+/**
+ * Retrieve global daily habit reminder settings from localStorage or fallback
+ */
+export function getGlobalReminderSettings(user = null) {
+  let enabled = false;
+  let time = '20:00';
+
+  if (typeof window !== 'undefined' && window.localStorage) {
+    const savedEnabled = localStorage.getItem(GLOBAL_REMINDER_STORAGE_KEY_ENABLED);
+    const savedTime = localStorage.getItem(GLOBAL_REMINDER_STORAGE_KEY_TIME);
+    if (savedEnabled !== null) {
+      enabled = savedEnabled === 'true';
+    } else if (user && typeof user.daily_reminder_enabled === 'boolean') {
+      enabled = user.daily_reminder_enabled;
+    }
+    if (savedTime) {
+      time = savedTime;
+    } else if (user && user.daily_reminder_time) {
+      time = user.daily_reminder_time;
+    }
+  } else if (user) {
+    enabled = Boolean(user.daily_reminder_enabled);
+    time = user.daily_reminder_time || '20:00';
+  }
+
+  return { enabled, time };
+}
+
+/**
+ * Save global daily habit reminder settings locally
+ */
+export function saveGlobalReminderSettings({ enabled, time }) {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(GLOBAL_REMINDER_STORAGE_KEY_ENABLED, String(Boolean(enabled)));
+    if (time) {
+      localStorage.setItem(GLOBAL_REMINDER_STORAGE_KEY_TIME, String(time));
     }
   }
 }
+
+/**
+ * Schedule or update the Global Daily Habit Reminder
+ *
+ * Rules:
+ * - Title: "HabitFlow — Daily Reminder"
+ * - Body: "Don't forget to complete your habits today! 💪"
+ *   If some habits are completed: "You're doing great! Complete your remaining habits today. 💪"
+ *   If all habits are completed: Do NOT send the reminder / cancel notification for today.
+ */
+export async function scheduleGlobalDailyReminder({
+  enabled,
+  time,
+  habits = [],
+  records = {},
+  todayKey = '',
+}) {
+  if (!enabled || !time) {
+    await cancelGlobalDailyReminder();
+    return false;
+  }
+
+  const parsedTime = parseReminderTime(time);
+  if (!parsedTime) {
+    console.warn(`Invalid global reminder time "${time}"`);
+    return false;
+  }
+
+  // Check today's completion status
+  const totalHabits = habits.length;
+  let completedCount = 0;
+  if (todayKey && totalHabits > 0) {
+    completedCount = habits.filter((h) => Boolean(records[`${h.id}_${todayKey}`])).length;
+  }
+
+  // If ALL habits are completed today, skip/cancel reminder
+  if (totalHabits > 0 && completedCount >= totalHabits) {
+    console.info('All habits completed today! Skipping global daily reminder.');
+    await cancelGlobalDailyReminder();
+    return false;
+  }
+
+  // Dynamic message based on progress
+  let notificationBody = "Don't forget to complete your habits today! 💪";
+  if (completedCount > 0) {
+    notificationBody = "You're doing great! Complete your remaining habits today. 💪";
+  }
+
+  if (isNativePlatform()) {
+    try {
+      const hasPermission = await requestNotificationPermission();
+      if (!hasPermission) {
+        console.info('Notification permission not granted for global reminder.');
+        return false;
+      }
+
+      // Cancel previous global notification
+      await LocalNotifications.cancel({
+        notifications: [{ id: GLOBAL_REMINDER_NOTIFICATION_ID }],
+      }).catch(() => {});
+
+      // Schedule daily recurring notification
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            id: GLOBAL_REMINDER_NOTIFICATION_ID,
+            title: 'HabitFlow — Daily Reminder',
+            body: notificationBody,
+            schedule: {
+              on: {
+                hour: parsedTime.hour,
+                minute: parsedTime.minute,
+              },
+              allowWhileIdle: true,
+            },
+            extra: {
+              type: 'global_daily_reminder',
+              time,
+            },
+          },
+        ],
+      });
+
+      console.info(`Scheduled Global Daily Reminder at ${time} (id: ${GLOBAL_REMINDER_NOTIFICATION_ID})`);
+      return true;
+    } catch (err) {
+      console.warn('Failed to schedule global reminder:', err);
+      return false;
+    }
+  } else {
+    console.info(`Web global daily reminder configured for ${time}: "${notificationBody}"`);
+    return true;
+  }
+}
+
+/**
+ * Cancel the global daily habit reminder notification
+ */
+export async function cancelGlobalDailyReminder() {
+  if (isNativePlatform()) {
+    try {
+      await LocalNotifications.cancel({
+        notifications: [{ id: GLOBAL_REMINDER_NOTIFICATION_ID }],
+      });
+      console.info(`Cancelled Global Daily Reminder (id: ${GLOBAL_REMINDER_NOTIFICATION_ID})`);
+    } catch (err) {
+      console.warn('Failed to cancel global daily reminder:', err);
+    }
+  }
+}
+
+/**
+ * Sync all active habits and global reminder
+ */
+export async function syncAllHabitReminders(habits = [], records = {}, todayKey = '', user = null) {
+  if (Array.isArray(habits)) {
+    for (const habit of habits) {
+      if (habit && habit.reminder_enabled && habit.reminder_time) {
+        await scheduleHabitReminder(habit);
+      }
+    }
+  }
+
+  const globalSettings = getGlobalReminderSettings(user);
+  if (globalSettings.enabled) {
+    await scheduleGlobalDailyReminder({
+      enabled: globalSettings.enabled,
+      time: globalSettings.time,
+      habits,
+      records,
+      todayKey,
+    });
+  }
+}
+

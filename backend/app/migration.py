@@ -97,3 +97,24 @@ def run_migrations(engine: Engine) -> None:
             )
             conn.commit()
             logger.info("Column 'reminder_time' successfully added to 'habits'.")
+
+        # 7. Check columns of the users table
+        if inspector.has_table("users"):
+            user_column_names = [col["name"] for col in inspector.get_columns("users")]
+
+            if "daily_reminder_enabled" not in user_column_names:
+                logger.info("Migrating database: Adding 'daily_reminder_enabled' to 'users' table...")
+                conn.execute(
+                    text("ALTER TABLE users ADD COLUMN daily_reminder_enabled BOOLEAN DEFAULT FALSE;")
+                )
+                conn.commit()
+                logger.info("Column 'daily_reminder_enabled' successfully added to 'users'.")
+
+            if "daily_reminder_time" not in user_column_names:
+                logger.info("Migrating database: Adding 'daily_reminder_time' to 'users' table...")
+                conn.execute(
+                    text("ALTER TABLE users ADD COLUMN daily_reminder_time VARCHAR DEFAULT '20:00';")
+                )
+                conn.commit()
+                logger.info("Column 'daily_reminder_time' successfully added to 'users'.")
+

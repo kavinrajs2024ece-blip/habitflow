@@ -29,7 +29,9 @@ import {
   scheduleHabitReminder, 
   cancelHabitReminder, 
   updateHabitReminder, 
-  syncAllHabitReminders 
+  syncAllHabitReminders,
+  scheduleGlobalDailyReminder,
+  getGlobalReminderSettings
 } from './services/notificationService';
 
 // Date Utilities
@@ -77,14 +79,14 @@ function HabitDashboard() {
 
       setHabits(fetchedHabits);
 
-      // Sync active habit reminders with Android Local Notifications
-      syncAllHabitReminders(fetchedHabits);
-
       const recordMap = {};
       fetchedRecords.forEach((rec) => {
         recordMap[`${rec.habit_id}_${rec.record_date}`] = Boolean(rec.completed);
       });
       setRecords(recordMap);
+
+      // Sync active habit reminders with Android Local Notifications
+      syncAllHabitReminders(fetchedHabits, recordMap, todayKey, user);
     } catch (err) {
       setError(
         err.message || 
@@ -93,11 +95,27 @@ function HabitDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [startDate, todayKey]);
+  }, [startDate, todayKey, user]);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Keep overall daily reminder in sync with current day completion state
+  useEffect(() => {
+    if (habits.length > 0) {
+      const globalSettings = getGlobalReminderSettings(user);
+      if (globalSettings.enabled) {
+        scheduleGlobalDailyReminder({
+          enabled: true,
+          time: globalSettings.time,
+          habits,
+          records,
+          todayKey,
+        });
+      }
+    }
+  }, [user, habits, records, todayKey]);
 
   /**
    * Toggle completion for today's date via upsert API

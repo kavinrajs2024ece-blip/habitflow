@@ -5749,6 +5749,14 @@
   min-width: 0;
 }
 
+.dashboard-right-sidebar-area,
+.row-2-sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
 .section-header-row {
   display: flex;
   align-items: center;
@@ -6367,6 +6375,226 @@
 }
 
 /* -------------------------------------------------------------------------- */
+/* HABIT REMINDERS CARD (Compact, Next Reminder + Daily Reminder Controls)   */
+/* -------------------------------------------------------------------------- */
+.reminders-dashboard-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reminders-card-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reminders-header-bell {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.reminders-status-pill {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #4f46e5;
+  background: #eef2ff;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid #c7d2fe;
+}
+
+.reminders-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reminders-item-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reminders-sub-heading {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.next-reminder-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+.next-reminder-name {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.next-reminder-time-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.no-reminder-text-block {
+  padding: 4px 0;
+}
+
+.no-reminder-main {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+}
+
+.no-reminder-sub {
+  font-size: 0.725rem;
+  color: #94a3b8;
+  margin: 2px 0 0 0;
+}
+
+.reminders-card-divider {
+  height: 1px;
+  background: #f1f5f9;
+  width: 100%;
+}
+
+.daily-reminder-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.daily-reminder-subtext {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 1px 0 0 0;
+}
+
+.daily-reminder-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.daily-time-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 4px 8px;
+}
+
+.time-clock-icon {
+  color: #6366f1;
+  flex-shrink: 0;
+}
+
+.daily-time-picker-field {
+  border: none;
+  background: transparent;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #0f172a;
+  outline: none;
+  cursor: pointer;
+}
+
+.daily-status-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+}
+
+.daily-status-badge.status-enabled {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.daily-status-badge.status-disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Reusable Switch Toggle */
+.switch-toggle {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.switch-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.switch-toggle input:checked + .switch-slider {
+  background-color: #2563eb;
+}
+
+.switch-toggle input:checked + .switch-slider:before {
+  transform: translateX(18px);
+}
+
+/* -------------------------------------------------------------------------- */
 /* ROW 3: WEEKLY PROGRESS (ALL HABITS) + RECENT ACTIVITY                      */
 /* -------------------------------------------------------------------------- */
 .dashboard-row-3-layout {
@@ -6732,6 +6960,25 @@
    DESKTOP PRESERVATION (Above 768px)
    -------------------------------------------------------------------------- */
 @media (min-width: 769px) {
+  .mobile-only-block {
+    display: none !important;
+  }
+  .desktop-header-only {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+  .desktop-only-inline {
+    display: inline-flex !important;
+  }
+  .desktop-only-block {
+    display: block !important;
+  }
+  .kpi-summary-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 16px !important;
+  }
   .ref-mobile-menu-btn,
   .mobile-hamburger-btn,
   .mobile-close-btn,
@@ -6760,6 +7007,14 @@
    MOBILE RESPONSIVE SYSTEM (max-width: 768px)
    -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
+  .desktop-header-only,
+  .desktop-only-block,
+  .desktop-only-inline {
+    display: none !important;
+  }
+  .mobile-only-block {
+    display: block !important;
+  }
   /* 1. Viewport, Shell & Container Resets (No horizontal overflow) */
   html, body {
     overflow-x: hidden !important;
@@ -12698,8 +12953,95 @@ body.dark-theme {
     display: none !important;
   }
 
-  .desktop-header-wrap,
-  .desktop-header-only {
+  .desktop-header-wrap {
     display: block !important;
   }
+
+  .desktop-header-only,
+  header.ref-dashboard-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
 }
+
+/* -------------------------------------------------------------------------- */
+/* DARK MODE OVERRIDES FOR NEW COMPONENTS                                     */
+/* -------------------------------------------------------------------------- */
+body.dark-theme .reminders-dashboard-card,
+[data-theme='dark'] .reminders-dashboard-card {
+  background: var(--bg-surface, #1e293b);
+  border-color: var(--border-medium, #334155);
+}
+
+body.dark-theme .reminders-status-pill,
+[data-theme='dark'] .reminders-status-pill {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+body.dark-theme .next-reminder-row,
+[data-theme='dark'] .next-reminder-row {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--border-medium, #334155);
+}
+
+body.dark-theme .next-reminder-name,
+[data-theme='dark'] .next-reminder-name {
+  color: #f1f5f9;
+}
+
+body.dark-theme .next-reminder-time-pill,
+[data-theme='dark'] .next-reminder-time-pill {
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}
+
+body.dark-theme .no-reminder-main,
+[data-theme='dark'] .no-reminder-main {
+  color: #cbd5e1;
+}
+
+body.dark-theme .no-reminder-sub,
+[data-theme='dark'] .no-reminder-sub,
+body.dark-theme .daily-reminder-subtext,
+[data-theme='dark'] .daily-reminder-subtext {
+  color: #94a3b8;
+}
+
+body.dark-theme .reminders-card-divider,
+[data-theme='dark'] .reminders-card-divider {
+  background: var(--border-subtle, #334155);
+}
+
+body.dark-theme .daily-time-input-wrap,
+[data-theme='dark'] .daily-time-input-wrap {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: var(--border-medium, #334155);
+}
+
+body.dark-theme .daily-time-picker-field,
+[data-theme='dark'] .daily-time-picker-field {
+  color: #f8fafc;
+  color-scheme: dark;
+}
+
+body.dark-theme .goal-metric-box,
+[data-theme='dark'] .goal-metric-box {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--border-medium, #334155);
+}
+
+body.dark-theme .goal-box-val,
+[data-theme='dark'] .goal-box-val {
+  color: #f8fafc;
+}
+
+body.dark-theme .daily-status-badge.status-disabled,
+[data-theme='dark'] .daily-status-badge.status-disabled {
+  background: rgba(51, 65, 85, 0.5);
+  color: #94a3b8;
+  border-color: #475569;
+}
+

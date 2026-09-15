@@ -23,6 +23,8 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
+    daily_reminder_enabled = Column(Boolean, default=False, nullable=False)
+    daily_reminder_time = Column(String, default="20:00", nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),

@@ -8,25 +8,29 @@ import {
   Plus, 
   ArrowRight, 
   Check, 
-  Menu,
   Search, 
   User, 
   Settings, 
   LogOut, 
   Target, 
-  ChevronDown, 
-  Activity, 
   Sun, 
   Moon,
   Clock,
   Sparkles,
-  AlertCircle
+  X
 } from 'lucide-react';
 import HabitCard from './HabitCard';
 import CircularProgress from './CircularProgress';
 import WeeklyBarChart from './WeeklyBarChart';
-import { formatDateKey, calculateStreak, parseHabitGoal, getCleanDescription } from '../utils/dateUtils';
-import { formatDisplayTime } from '../services/notificationService';
+import { formatDateKey, calculateStreak, parseHabitGoal } from '../utils/dateUtils';
+import { 
+  formatDisplayTime, 
+  getGlobalReminderSettings, 
+  saveGlobalReminderSettings, 
+  scheduleGlobalDailyReminder,
+  requestNotificationPermission
+} from '../services/notificationService';
+import { updateUserProfile } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -41,7 +45,6 @@ export default function ReferenceDashboard({
   onOpenAddModal,
   user,
   setActiveView,
-  onOpenSidebar,
   togglingIds = {}
 }) {
   const { logout } = useAuth();
@@ -49,6 +52,28 @@ export default function ReferenceDashboard({
   const today = useMemo(() => new Date(), []);
   const todayStr = todayKey || formatDateKey(today);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Global daily habit reminder state
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(() => {
+    const settings = getGlobalReminderSettings(user);
+    return settings.enabled;
+  });
+  const [dailyReminderTime, setDailyReminderTime] = useState(() => {
+    const settings = getGlobalReminderSettings(user);
+    return settings.time || '20:00';
+  });
+
+  // Reminders overview modal state
+  const [remindersModalOpen, setRemindersModalOpen] = useState(false);
+
+  // Sync state if user changes
+  useEffect(() => {
+    const settings = getGlobalReminderSettings(user);
+    setDailyReminderEnabled(settings.enabled);
+    if (settings.time) {
+      setDailyReminderTime(settings.time);
+    }
+  }, [user]);
 
   // Live filter for habits search
   const displayedHabits = useMemo(() => {
@@ -60,7 +85,7 @@ export default function ReferenceDashboard({
     );
   }, [habits, searchQuery]);
 
-  // Profile dropdown state & ref for click outside
+  // Profile dropdown state & click outside handler
   const [profileOpen, setProfileOpen] = useState(false);
   const profileDropdownRef = useRef(null);
 
@@ -83,9 +108,8 @@ export default function ReferenceDashboard({
     };
   }, [profileOpen]);
 
-  // Selected habit for right-column Goal & Progress card
+  // Selected habit for details
   const [inspectedHabitId, setInspectedHabitId] = useState(() => habits[0]?.id || null);
-
   const activeHabit = useMemo(() => {
     return habits.find((h) => h.id === inspectedHabitId) || habits[0] || null;
   }, [habits, inspectedHabitId]);
@@ -101,7 +125,7 @@ export default function ReferenceDashboard({
     return 'U';
   }, [user]);
 
-  // Time-based greeting: "Good morning, <name> 👋"
+  // Greeting: "Good morning, <name> 👋" or evening/afternoon based on hour
   const { greetingText, subtitleText } = useMemo(() => {
     const hour = today.getHours();
     let timeGreeting = 'Good morning';
@@ -111,7 +135,7 @@ export default function ReferenceDashboard({
       timeGreeting = 'Good evening';
     }
 
-    const firstName = user?.name ? user.name.trim().split(' ')[0] : 'friend';
+    const firstName = user?.name ? user.name.trim().split(' ')[0] : 'there';
     return {
       greetingText: `${timeGreeting}, ${firstName} 👋`,
       subtitleText: "Let's build better habits today.",
@@ -128,7 +152,7 @@ export default function ReferenceDashboard({
   }, [today]);
 
   // ---------------------------------------------------------------------------
-  // 1. KPI SUMMARY METRICS - Real data from PostgreSQL/SQLite database
+  // KPI STATS - Real data from backend
   // ---------------------------------------------------------------------------
   const totalHabitsCount = habits.length;
 
@@ -149,7 +173,7 @@ export default function ReferenceDashboard({
     return Math.max(...habits.map((h) => calculateStreak(h.id, records)), 0);
   }, [habits, records]);
 
-  // Overall progress = total completed days across all active habits / total goal days
+  // Overall progress
   const { totalGoalDays, totalCompletedDays, overallProgressPct } = useMemo(() => {
     if (habits.length === 0) {
       return { totalGoalDays: 0, totalCompletedDays: 0, overallProgressPct: 0 };
@@ -176,7 +200,7 @@ export default function ReferenceDashboard({
   }, [habits, records]);
 
   // ---------------------------------------------------------------------------
-  // 2. UPCOMING REMINDER SECTION - Calculated dynamically from real data
+  // UPCOMING HABIT REMINDER - Dynamic calculation
   // ---------------------------------------------------------------------------
   const nextReminder = useMemo(() => {
     const habitsWithReminders = habits.filter(h => h.reminder_enabled && h.reminder_time);
@@ -195,7 +219,6 @@ export default function ReferenceDashboard({
       };
     });
 
-    // Reminders remaining for today
     const remainingToday = mapped.filter(m => m.diff >= 0).sort((a, b) => a.diff - b.diff);
     if (remainingToday.length > 0) {
       return {
@@ -205,7 +228,6 @@ export default function ReferenceDashboard({
       };
     }
 
-    // Otherwise, earliest reminder tomorrow
     const earliestTomorrow = mapped.sort((a, b) => a.reminderMinutes - b.reminderMinutes)[0];
     return {
       habitName: earliestTomorrow.name,
@@ -214,8 +236,69 @@ export default function ReferenceDashboard({
     };
   }, [habits]);
 
+  // Total active individual reminders count
+  const activeRemindersCount = useMemo(() => {
+    return habits.filter(h => h.reminder_enabled && h.reminder_time).length;
+  }, [habits]);
+
   // ---------------------------------------------------------------------------
-  // 3. RECENT ACTIVITY LIST - Real database completions
+  // GLOBAL DAILY REMINDER HANDLERS
+  // ---------------------------------------------------------------------------
+  const handleToggleDailyReminder = async (e) => {
+    const nextEnabled = e.target.checked;
+    setDailyReminderEnabled(nextEnabled);
+    saveGlobalReminderSettings({ enabled: nextEnabled, time: dailyReminderTime });
+
+    if (nextEnabled) {
+      await requestNotificationPermission();
+    }
+
+    await scheduleGlobalDailyReminder({
+      enabled: nextEnabled,
+      time: dailyReminderTime,
+      habits,
+      records,
+      todayKey: todayStr,
+    });
+
+    // Sync to backend user profile if authenticated
+    try {
+      await updateUserProfile({
+        daily_reminder_enabled: nextEnabled,
+        daily_reminder_time: dailyReminderTime,
+      });
+    } catch {
+      // Offline fallback safe
+    }
+  };
+
+  const handleDailyReminderTimeChange = async (e) => {
+    const nextTime = e.target.value;
+    setDailyReminderTime(nextTime);
+    saveGlobalReminderSettings({ enabled: dailyReminderEnabled, time: nextTime });
+
+    if (dailyReminderEnabled) {
+      await scheduleGlobalDailyReminder({
+        enabled: true,
+        time: nextTime,
+        habits,
+        records,
+        todayKey: todayStr,
+      });
+    }
+
+    try {
+      await updateUserProfile({
+        daily_reminder_enabled: dailyReminderEnabled,
+        daily_reminder_time: nextTime,
+      });
+    } catch {
+      // Offline fallback safe
+    }
+  };
+
+  // ---------------------------------------------------------------------------
+  // RECENT ACTIVITY LIST
   // ---------------------------------------------------------------------------
   const recentActivityList = useMemo(() => {
     const list = [];
@@ -269,7 +352,7 @@ export default function ReferenceDashboard({
   return (
     <div className="reference-dashboard-layout" id="habitflow-reference-dashboard">
       {/* ===================================================================== */}
-      {/* 1. DESKTOP HEADER (Preserved for Desktop View)                         */}
+      {/* 1. DESKTOP HEADER (Properly aligned & vertically centered)            */}
       {/* ===================================================================== */}
       <header className="ref-dashboard-header desktop-header-only">
         <div className="ref-header-left">
@@ -279,6 +362,7 @@ export default function ReferenceDashboard({
           </div>
         </div>
 
+        {/* Right: Search → Add Habit → Date → Notification → Theme → Profile */}
         <div className="ref-header-right">
           <div className="ref-search-box">
             <Search size={15} className="ref-search-icon" />
@@ -314,9 +398,23 @@ export default function ReferenceDashboard({
           </button>
 
           <div className="ref-date-pill">
-            <CalendarIcon size={15} className="ref-pill-icon" />
+            <CalendarIcon size={14} className="ref-pill-icon" />
             <span>{formattedToday}</span>
           </div>
+
+          <button 
+            type="button"
+            className="ref-bell-btn header-bell-btn"
+            onClick={() => setRemindersModalOpen(true)}
+            title="Habit Reminders"
+            aria-label="Habit Reminders"
+            id="btn-desktop-header-bell"
+          >
+            <Bell size={17} />
+            {(activeRemindersCount > 0 || dailyReminderEnabled) && (
+              <span className="ref-bell-dot" />
+            )}
+          </button>
 
           <button 
             type="button"
@@ -326,7 +424,7 @@ export default function ReferenceDashboard({
             aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             id="btn-header-theme-toggle"
           >
-            {isDark ? <Sun size={18} className="theme-toggle-sun" /> : <Moon size={18} className="theme-toggle-moon" />}
+            {isDark ? <Sun size={17} className="theme-toggle-sun" /> : <Moon size={17} className="theme-toggle-moon" />}
           </button>
 
           <div className="ref-profile-dropdown-wrapper" ref={profileDropdownRef}>
@@ -406,7 +504,7 @@ export default function ReferenceDashboard({
       </header>
 
       {/* ===================================================================== */}
-      {/* 2. MOBILE TOP HERO GREETING (Shown on Mobile screens <= 768px)         */}
+      {/* 2. MOBILE TOP GREETING (Visible on screen widths <= 768px)             */}
       {/* ===================================================================== */}
       <div className="mobile-greeting-hero mobile-only-block">
         <h1 className="mobile-greeting-title">{greetingText}</h1>
@@ -414,53 +512,15 @@ export default function ReferenceDashboard({
       </div>
 
       {/* ===================================================================== */}
-      {/* 3. SUMMARY STATS (Mobile 3-column row & Desktop 4-column grid)         */}
+      {/* 3. FOUR KPI SUMMARY CARDS (One unified responsive grid)                */}
+      {/* Desktop: 4 equal cards in 1 row. Mobile: 2x2 grid.                     */}
       {/* ===================================================================== */}
-      {/* Mobile Stats Row: Today's Progress, Current Streak, Total Habits */}
-      <div className="mobile-stats-row mobile-only-block">
-        <div className="mobile-stat-card">
-          <span className="mobile-stat-label">Today's Progress</span>
-          <span className="mobile-stat-val text-blue">{todayRatePct}%</span>
-        </div>
-        <div className="mobile-stat-card">
-          <span className="mobile-stat-label">Current Streak</span>
-          <span className="mobile-stat-val text-amber">{currentStreak} {currentStreak === 1 ? 'Day' : 'Days'}</span>
-        </div>
-        <div className="mobile-stat-card">
-          <span className="mobile-stat-label">Total Habits</span>
-          <span className="mobile-stat-val text-indigo">{totalHabitsCount}</span>
-        </div>
-      </div>
-
-      {/* Mobile Progress Section: Circular Progress Ring + Fraction */}
-      <div className="mobile-progress-section card-elevated mobile-only-block">
-        <div className="mobile-progress-ring-wrap">
-          <CircularProgress
-            percentage={todayRatePct}
-            size={76}
-            strokeWidth={7}
-            color="#6366f1"
-            trackColor="#1e293b"
-            fontSize={16}
-          />
-        </div>
-        <div className="mobile-progress-text-wrap">
-          <span className="mobile-progress-tag">Today's Progress</span>
-          <h3 className="mobile-progress-fraction">{completedTodayCount}/{totalHabitsCount} completed</h3>
-          <p className="mobile-progress-sub">
-            {todayRatePct === 100 && totalHabitsCount > 0 
-              ? "All active habits completed for today!" 
-              : `${todayLeftCount} habit${todayLeftCount === 1 ? '' : 's'} remaining`}
-          </p>
-        </div>
-      </div>
-
-      {/* Desktop 4 Summary Cards */}
-      <div className="kpi-summary-grid desktop-only-block">
+      <div className="kpi-summary-grid" id="kpi-summary-grid">
+        {/* Card 1: Total Habits */}
         <div className="dashboard-card kpi-card">
           <div className="kpi-card-top">
             <div className="kpi-icon-box box-blue">
-              <LayoutGrid size={18} />
+              <LayoutGrid size={17} />
             </div>
             <span className="kpi-card-label">Total Habits</span>
           </div>
@@ -469,10 +529,11 @@ export default function ReferenceDashboard({
           </div>
         </div>
 
+        {/* Card 2: Completed Today */}
         <div className="dashboard-card kpi-card">
           <div className="kpi-card-top">
             <div className="kpi-icon-box box-green">
-              <CheckCircle2 size={18} />
+              <CheckCircle2 size={17} />
             </div>
             <span className="kpi-card-label">Completed Today</span>
           </div>
@@ -483,12 +544,13 @@ export default function ReferenceDashboard({
           </div>
         </div>
 
+        {/* Card 3: Overall Progress */}
         <div className="dashboard-card kpi-card">
           <div className="kpi-card-top">
             <div className="kpi-icon-box box-emerald">
               <CircularProgress 
                 percentage={overallProgressPct} 
-                size={22} 
+                size={20} 
                 strokeWidth={3} 
                 showValue={false} 
                 color="#10b981" 
@@ -501,56 +563,24 @@ export default function ReferenceDashboard({
           </div>
         </div>
 
+        {/* Card 4: Current Streak */}
         <div className="dashboard-card kpi-card">
           <div className="kpi-card-top">
             <div className="kpi-icon-box box-orange">
-              <Flame size={18} />
+              <Flame size={17} />
             </div>
             <span className="kpi-card-label">Current Streak</span>
           </div>
           <div className="kpi-card-bottom">
-            <span className="kpi-card-val">{currentStreak} Days</span>
+            <span className="kpi-card-val">{currentStreak} {currentStreak === 1 ? 'Day' : 'Days'}</span>
           </div>
         </div>
       </div>
 
       {/* ===================================================================== */}
-      {/* 4. UPCOMING REMINDER BANNER / SECTION                                  */}
-      {/* ===================================================================== */}
-      <div className="dashboard-reminder-banner card-elevated" id="dashboard-reminder-banner">
-        <div className="reminder-banner-left">
-          <div className="reminder-banner-icon-wrap">
-            <Bell size={20} className="reminder-bell-ringing" />
-          </div>
-          <div className="reminder-banner-text">
-            {nextReminder ? (
-              <>
-                <span className="reminder-banner-tag">Next reminder</span>
-                <h4 className="reminder-banner-title">{nextReminder.habitName}</h4>
-                <span className="reminder-banner-time">
-                  <Clock size={13} /> {nextReminder.time} ({nextReminder.subtext})
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="reminder-banner-tag">Habit Reminders</span>
-                <h4 className="reminder-banner-title">No reminders scheduled</h4>
-                <p className="reminder-banner-desc">Set a reminder when creating or editing a habit to get daily local alerts.</p>
-              </>
-            )}
-          </div>
-        </div>
-
-        {nextReminder && (
-          <div className="reminder-banner-badge">
-            <Clock size={14} />
-            <span>{nextReminder.time}</span>
-          </div>
-        )}
-      </div>
-
-      {/* ===================================================================== */}
-      {/* 5. MAIN TWO-COLUMN DASHBOARD GRID (HABITS + ANALYTICS + REMINDERS)     */}
+      {/* 4. MAIN 2-COLUMN DASHBOARD GRID                                       */}
+      {/* Desktop: Left: Habits + Weekly Progress; Right: Progress + Reminders  */}
+      {/* Mobile: 1 Column stacked in natural order                              */}
       {/* ===================================================================== */}
       <div className="dashboard-main-two-col-layout">
         {/* LEFT / MAIN AREA */}
@@ -576,7 +606,7 @@ export default function ReferenceDashboard({
           <div className="habits-desktop-4col-grid">
             {displayedHabits.length === 0 ? (
               <div className="no-habits-empty-card card-elevated">
-                <Target size={40} color="#6366f1" />
+                <Target size={36} color="#6366f1" />
                 <h3>{searchQuery ? `No habits match "${searchQuery}"` : "No Habits Created Yet"}</h3>
                 <p>{searchQuery ? "Try a different search term" : "Start your consistency journey by creating your first daily habit."}</p>
                 {!searchQuery && (
@@ -584,7 +614,7 @@ export default function ReferenceDashboard({
                     type="button"
                     onClick={onOpenAddModal} 
                     className="btn btn-primary"
-                    style={{ marginTop: '0.75rem' }}
+                    style={{ marginTop: '0.5rem' }}
                   >
                     <Plus size={16} /> Add First Habit
                   </button>
@@ -679,9 +709,9 @@ export default function ReferenceDashboard({
           </div>
         </section>
 
-        {/* RIGHT / SIDEBAR AREA (Desktop right rail) */}
-        <aside className="dashboard-right-sidebar-area desktop-only-block">
-          {/* 1. Today's Progress Ring Card */}
+        {/* RIGHT / SIDEBAR AREA (Compact & perfectly aligned) */}
+        <aside className="dashboard-right-sidebar-area">
+          {/* Card 1: Today's Progress */}
           <div className="dashboard-card today-progress-card">
             <div className="stats-card-header">
               <div className="stats-header-titles">
@@ -696,11 +726,11 @@ export default function ReferenceDashboard({
               <div className="today-circular-wrap">
                 <CircularProgress
                   percentage={todayRatePct}
-                  size={76}
-                  strokeWidth={7}
+                  size={70}
+                  strokeWidth={6.5}
                   color="#2563eb"
                   trackColor="#1e293b"
-                  fontSize={16}
+                  fontSize={15}
                 />
               </div>
 
@@ -730,11 +760,11 @@ export default function ReferenceDashboard({
             </div>
           </div>
 
-          {/* 2. Goal & Overall Progress Card */}
+          {/* Card 2: Overall Progress */}
           <div className="dashboard-card goal-progress-card">
             <div className="stats-card-header">
               <div className="stats-header-titles">
-                <h3 className="dashboard-card-title">Overall Consistency</h3>
+                <h3 className="dashboard-card-title">Overall Progress</h3>
                 <span className="overall-pct-badge">{overallProgressPct}%</span>
               </div>
             </div>
@@ -754,6 +784,80 @@ export default function ReferenceDashboard({
               </div>
             </div>
           </div>
+
+          {/* Card 3: Redesigned HABIT REMINDERS Card */}
+          <div className="dashboard-card reminders-dashboard-card" id="card-habit-reminders">
+            <div className="stats-card-header">
+              <div className="stats-header-titles">
+                <div className="reminders-card-title-wrap">
+                  <Bell size={16} className="reminders-header-bell" />
+                  <h3 className="dashboard-card-title">Habit Reminders</h3>
+                </div>
+                <span className="reminders-status-pill">
+                  {dailyReminderEnabled ? 'Active' : 'Standby'}
+                </span>
+              </div>
+            </div>
+
+            <div className="reminders-card-content">
+              {/* Section 1: Next Reminder */}
+              <div className="reminders-item-block">
+                <span className="reminders-sub-heading">Next reminder</span>
+                {nextReminder ? (
+                  <div className="next-reminder-row">
+                    <span className="next-reminder-name">{nextReminder.habitName}</span>
+                    <span className="next-reminder-time-pill">
+                      <Clock size={12} />
+                      <span>{nextReminder.time}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="no-reminder-text-block">
+                    <p className="no-reminder-main">No reminders scheduled</p>
+                    <p className="no-reminder-sub">Set a reminder while creating or editing a habit.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="reminders-card-divider" />
+
+              {/* Section 2: Global Daily Habit Reminder */}
+              <div className="reminders-item-block">
+                <div className="daily-reminder-header-row">
+                  <div>
+                    <span className="reminders-sub-heading">Daily reminder</span>
+                    <p className="daily-reminder-subtext">Complete all your habits</p>
+                  </div>
+                  <label className="switch-toggle" htmlFor="dash-daily-reminder-toggle">
+                    <input
+                      id="dash-daily-reminder-toggle"
+                      type="checkbox"
+                      checked={dailyReminderEnabled}
+                      onChange={handleToggleDailyReminder}
+                      aria-label="Toggle Daily Habit Reminder"
+                    />
+                    <span className="switch-slider" />
+                  </label>
+                </div>
+
+                <div className="daily-reminder-controls-row">
+                  <div className="daily-time-input-wrap">
+                    <Clock size={13} className="time-clock-icon" />
+                    <input
+                      type="time"
+                      value={dailyReminderTime}
+                      onChange={handleDailyReminderTimeChange}
+                      className="daily-time-picker-field"
+                      aria-label="Daily reminder time"
+                    />
+                  </div>
+                  <span className={`daily-status-badge ${dailyReminderEnabled ? 'status-enabled' : 'status-disabled'}`}>
+                    {dailyReminderEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </aside>
       </div>
 
@@ -767,6 +871,108 @@ export default function ReferenceDashboard({
       >
         <Plus size={24} strokeWidth={2.5} />
       </button>
+
+      {/* Reminders Overview Modal (Accessible from Bell in Header) */}
+      {remindersModalOpen && (
+        <div className="modal-overlay" onClick={() => setRemindersModalOpen(false)}>
+          <div 
+            className="modal-container mobile-reminders-modal"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <div className="modal-icon-wrap box-purple">
+                  <Bell size={20} color="#6366f1" />
+                </div>
+                <div>
+                  <h2 className="modal-title">Habit Reminders</h2>
+                  <p className="modal-sub">Scheduled Daily & Individual Notifications</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => setRemindersModalOpen(false)}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="reminders-modal-body">
+              {/* Daily Reminder Box */}
+              <div className="modal-daily-reminder-card">
+                <div className="modal-daily-reminder-top">
+                  <div>
+                    <h4 className="modal-reminder-card-title">Daily Habit Reminder</h4>
+                    <p className="modal-reminder-card-sub">Daily check-in alert for all habits</p>
+                  </div>
+                  <label className="switch-toggle" htmlFor="modal-daily-reminder-toggle">
+                    <input
+                      id="modal-daily-reminder-toggle"
+                      type="checkbox"
+                      checked={dailyReminderEnabled}
+                      onChange={handleToggleDailyReminder}
+                    />
+                    <span className="switch-slider" />
+                  </label>
+                </div>
+                <div className="modal-daily-reminder-bottom">
+                  <div className="time-input-wrap">
+                    <Clock size={15} />
+                    <input
+                      type="time"
+                      value={dailyReminderTime}
+                      onChange={handleDailyReminderTimeChange}
+                      className="form-input reminder-time-input"
+                    />
+                  </div>
+                  <span className={`daily-status-badge ${dailyReminderEnabled ? 'status-enabled' : 'status-disabled'}`}>
+                    {dailyReminderEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Individual Habit Reminders List */}
+              <h4 className="modal-reminders-list-title">Individual Habit Reminders</h4>
+              {habits.filter(h => h.reminder_enabled && h.reminder_time).length === 0 ? (
+                <div className="no-reminders-empty">
+                  <Clock size={32} color="#64748b" />
+                  <h4>No individual reminders</h4>
+                  <p>Enable reminders while adding or editing habits to receive specific alerts.</p>
+                </div>
+              ) : (
+                <div className="active-reminders-list">
+                  {habits.filter(h => h.reminder_enabled && h.reminder_time).map(h => (
+                    <div key={h.id} className="active-reminder-row">
+                      <div className="reminder-habit-info">
+                        <span className="reminder-habit-title">{h.name}</span>
+                        <span className="reminder-habit-schedule">Daily at {formatDisplayTime(h.reminder_time)}</span>
+                      </div>
+                      <div className="reminder-time-chip">
+                        <Clock size={13} />
+                        <span>{formatDisplayTime(h.reminder_time)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-full-width"
+                onClick={() => setRemindersModalOpen(false)}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

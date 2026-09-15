@@ -115,9 +115,5 @@ def update_me(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    if user_update.name is not None and user_update.name.strip():
-        current_user.name = user_update.name.strip()
-        db.commit()
-        db.refresh(current_user)
-    return current_user
+    return crud.update_user(db=db, db_user=current_user, user_update=user_update)
 

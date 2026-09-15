@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Settings, 
   Sun, 
@@ -7,15 +7,85 @@ import {
   Sliders, 
   Database, 
   Zap, 
-  Info 
+  Info,
+  Bell,
+  Clock
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { 
+  getGlobalReminderSettings, 
+  saveGlobalReminderSettings, 
+  scheduleGlobalDailyReminder,
+  requestNotificationPermission 
+} from '../../services/notificationService';
+import { updateUserProfile } from '../../services/api';
 
 /**
- * SettingsPage - Professional SaaS Settings & Preferences with Light / Dark Mode Toggle
+ * SettingsPage - Professional SaaS Settings & Preferences with Light / Dark Mode Toggle & Global Reminder
  */
 export default function SettingsPage() {
   const { theme, isDark, toggleTheme, setTheme } = useTheme();
+  const { user } = useAuth();
+
+  const [dailyReminderEnabled, setDailyReminderEnabled] = useState(() => {
+    return getGlobalReminderSettings(user).enabled;
+  });
+  const [dailyReminderTime, setDailyReminderTime] = useState(() => {
+    return getGlobalReminderSettings(user).time || '20:00';
+  });
+
+  useEffect(() => {
+    const s = getGlobalReminderSettings(user);
+    setDailyReminderEnabled(s.enabled);
+    if (s.time) setDailyReminderTime(s.time);
+  }, [user]);
+
+  const handleToggleDailyReminder = async (e) => {
+    const nextEnabled = e.target.checked;
+    setDailyReminderEnabled(nextEnabled);
+    saveGlobalReminderSettings({ enabled: nextEnabled, time: dailyReminderTime });
+
+    if (nextEnabled) {
+      await requestNotificationPermission();
+    }
+
+    await scheduleGlobalDailyReminder({
+      enabled: nextEnabled,
+      time: dailyReminderTime,
+    });
+
+    try {
+      await updateUserProfile({
+        daily_reminder_enabled: nextEnabled,
+        daily_reminder_time: dailyReminderTime,
+      });
+    } catch {
+      // safe fallback
+    }
+  };
+
+  const handleTimeChange = async (e) => {
+    const nextTime = e.target.value;
+    setDailyReminderTime(nextTime);
+    saveGlobalReminderSettings({ enabled: dailyReminderEnabled, time: nextTime });
+
+    if (dailyReminderEnabled) {
+      await scheduleGlobalDailyReminder({
+        enabled: true,
+        time: nextTime,
+      });
+    }
+
+    try {
+      await updateUserProfile({
+        daily_reminder_enabled: dailyReminderEnabled,
+        daily_reminder_time: nextTime,
+      });
+    } catch {
+      // safe fallback
+    }
+  };
 
   return (
     <div className="settings-dashboard-layout">
@@ -190,7 +260,63 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* 3. System & Application Configuration Card */}
+      {/* 3. Daily Habit Reminder Settings Card */}
+      <div className="settings-card reminder-settings-card">
+        <div className="card-header-clean">
+          <div className="card-title-icon-row">
+            <Bell size={18} className="theme-section-icon" color="#6366f1" />
+            <h3 className="card-clean-title">Daily Habit Reminder</h3>
+          </div>
+          <p className="card-clean-sub">
+            Receive a single daily Android notification reminding you to complete your daily habits.
+          </p>
+        </div>
+
+        <div className="settings-reminder-panel">
+          <div className="settings-reminder-toggle-row">
+            <div className="settings-reminder-text">
+              <span className="settings-reminder-label">Enable Daily Reminder</span>
+              <span className="settings-reminder-hint">
+                {dailyReminderEnabled ? `Active daily alert at ${dailyReminderTime}` : 'Disabled — no daily reminder alert'}
+              </span>
+            </div>
+            <label className="switch-toggle" htmlFor="settings-daily-reminder-toggle">
+              <input
+                id="settings-daily-reminder-toggle"
+                type="checkbox"
+                checked={dailyReminderEnabled}
+                onChange={handleToggleDailyReminder}
+                aria-label="Toggle Daily Habit Reminder"
+              />
+              <span className="switch-slider" />
+            </label>
+          </div>
+
+          <div className="settings-reminder-time-row">
+            <div className="settings-time-label-group">
+              <Clock size={16} className="text-indigo" />
+              <span className="settings-time-label">Reminder Time:</span>
+            </div>
+            <div className="settings-time-input-box">
+              <input
+                type="time"
+                value={dailyReminderTime}
+                onChange={handleTimeChange}
+                className="form-input settings-time-input"
+                aria-label="Daily reminder time"
+              />
+            </div>
+          </div>
+
+          <div className="settings-reminder-footer">
+            <span className={`daily-status-badge ${dailyReminderEnabled ? 'status-enabled' : 'status-disabled'}`}>
+              {dailyReminderEnabled ? 'Daily Notification Scheduled' : 'Notifications Disabled'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. System & Application Configuration Card */}
       <div className="settings-card config-card">
         <div className="card-header-clean">
           <div className="card-title-icon-row">
