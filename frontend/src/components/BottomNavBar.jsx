@@ -17,7 +17,7 @@ export default function BottomNavBar({ activeView, setActiveView }) {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     { id: 'habits', label: 'Habits', icon: CheckSquare },
-    { id: 'analytics', label: 'Statistics', icon: BarChart3 },
+    { id: 'analytics', label: 'Stats', fullLabel: 'Statistics', icon: BarChart3 },
     { id: 'profile', label: 'Profile', icon: User },
   ];
 

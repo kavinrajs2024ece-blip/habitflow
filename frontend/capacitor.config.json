@@ -1,5 +1,11 @@
 {
   "appId": "com.habitflow.app",
   "appName": "HabitFlow",
-  "webDir": "dist"
+  "webDir": "dist",
+  "plugins": {
+    "LocalNotifications": {
+      "iconColor": "#4f46e5",
+      "sound": "beep.wav"
+    }
+  }
 }

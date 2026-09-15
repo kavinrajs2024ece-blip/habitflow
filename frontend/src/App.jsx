@@ -31,7 +31,8 @@ import {
   updateHabitReminder, 
   syncAllHabitReminders,
   scheduleGlobalDailyReminder,
-  getGlobalReminderSettings
+  getGlobalReminderSettings,
+  ensureNotificationChannel
 } from './services/notificationService';
 
 // Date Utilities
@@ -96,6 +97,10 @@ function HabitDashboard() {
       setLoading(false);
     }
   }, [startDate, todayKey, user]);
+
+  useEffect(() => {
+    ensureNotificationChannel();
+  }, []);
 
   useEffect(() => {
     loadData();

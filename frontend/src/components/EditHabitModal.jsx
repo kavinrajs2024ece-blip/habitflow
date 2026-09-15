@@ -86,6 +86,10 @@ export default function EditHabitModal({
       return;
     }
 
+    if (reminderEnabled) {
+      await requestNotificationPermission();
+    }
+
     try {
       setError('');
       const formattedDescription = formatHabitDescription(category.name, parsedGoal, description);

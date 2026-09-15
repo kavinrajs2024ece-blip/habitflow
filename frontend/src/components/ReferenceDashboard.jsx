@@ -28,7 +28,8 @@ import {
   getGlobalReminderSettings, 
   saveGlobalReminderSettings, 
   scheduleGlobalDailyReminder,
-  requestNotificationPermission
+  requestNotificationPermission,
+  sendTestNotification
 } from '../services/notificationService';
 import { updateUserProfile } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -854,6 +855,25 @@ export default function ReferenceDashboard({
                   <span className={`daily-status-badge ${dailyReminderEnabled ? 'status-enabled' : 'status-disabled'}`}>
                     {dailyReminderEnabled ? 'Enabled' : 'Disabled'}
                   </span>
+                </div>
+
+                <div className="reminders-test-row">
+                  <button
+                    type="button"
+                    className="btn-reminders-test"
+                    onClick={async () => {
+                      const success = await sendTestNotification();
+                      if (success) {
+                        alert('Test notification scheduled! It will arrive in 2 seconds.');
+                      } else {
+                        alert('Could not schedule test notification. Please check app permissions.');
+                      }
+                    }}
+                    title="Send a 2-second test notification to verify Android alerts"
+                  >
+                    <Bell size={12} />
+                    <span>Send Test Notification</span>
+                  </button>
                 </div>
               </div>
             </div>
